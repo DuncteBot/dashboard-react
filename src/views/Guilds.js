@@ -1,36 +1,51 @@
 import React, {Component} from 'react';
 import GuildCard from '../components/GuildCard';
 import Loader from '../components/Loader';
-import {Link} from 'react-router-dom';
-import {loadGuilds} from '../utils/helpers';
+import {Link, Redirect} from 'react-router-dom';
+import {loadGuilds as apiLoadGuilds} from '../utils/helpers';
 
 export default class Guilds extends Component {
-    constructor(props) {
-        super(props);
 
-        this.state = props.state;
-    }
-
-    async componentDidMount() {
+    loadGuilds = async () => {
         if (!this.props.state.guilds.length) {
-            const {guilds, status} = loadGuilds();
+            const {guilds, success, message} = await apiLoadGuilds();
 
-            if (!status) {
-                this.props.updateState({guilds: []});
+            if (!success) {
+                if (message === 'SESSION_INVALID') {
+                    document.cookie.split(';').forEach(function(c) { document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/'); });
+                }
+
+                this.props.updateState({guilds: [], guildsLoaded: true});
             } else {
-                this.props.updateState({guilds});
+                this.props.updateState({guilds, guildsLoaded: true});
             }
+        }
+    };
+
+    componentDidMount() {
+        const {guilds, guildsLoaded} = this.props.state;
+
+        if (!guilds.length && !guildsLoaded) {
+            this.loadGuilds();
         }
     }
 
-
     render() {
-        const {guilds} = this.state;
+        const {guilds, guildsLoaded, loggedIn} = this.props.state;
 
         return (
             <div>
-                <p><Link to="/">Go back</Link></p>
-                {guilds.length ? guilds.map((guild) => <GuildCard guild={guild} key={guild.id}/>) : <Loader/>}
+                {loggedIn ? <div>
+                    <p><Link to="/">Go back</Link></p>
+                    {guilds.length > 0 ?
+                        guilds.map((guild) => <GuildCard guild={guild} key={guild.id}/>) :
+                        <div>
+                            {guildsLoaded ? 'no guilds found' : <Loader/>}
+                        </div>
+                    }
+                </div> :
+                    <Redirect to="/"/>
+                }
             </div>
         );
     }
