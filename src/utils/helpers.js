@@ -4,6 +4,8 @@ export async function loadGuilds() {
     const {data: response} = await axios.get('/getUserGuilds');
 
     console.log(response);
+
+    return response;
 }
 
 export async function getOauthUrl() {

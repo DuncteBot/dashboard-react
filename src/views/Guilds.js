@@ -12,13 +12,14 @@ export default class Guilds extends Component {
     }
 
     async componentDidMount() {
-        if (!this.state.guilds.length) {
-            const {guilds} = loadGuilds();
+        if (!this.props.state.guilds.length) {
+            const {guilds, status} = loadGuilds();
 
-
-            setTimeout(() => {
+            if (!status) {
+                this.props.updateState({guilds: []});
+            } else {
                 this.props.updateState({guilds});
-            }, 5000);
+            }
         }
     }
 
